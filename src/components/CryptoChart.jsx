@@ -1,21 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  TimeScale,
-  Tooltip,
-  Legend,
-  Title,
-} from "chart.js";
-import {
-  CandlestickController,
-  CandlestickElement,
-} from "chartjs-chart-financial"; // Import the candlestick controller and element
-import "chartjs-chart-financial"; // Import the plugin
+import { Chart as ChartJS,CategoryScale,LinearScale,TimeScale,Tooltip, Legend, Title, } from "chart.js";
+import { CandlestickController,CandlestickElement, } from "chartjs-chart-financial";
+import "chartjs-chart-financial";
 import "chartjs-adapter-date-fns";
 
-// Register required components and the CandlestickController with CandlestickElement
+// Register required components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -24,7 +13,7 @@ ChartJS.register(
   Legend,
   Title,
   CandlestickController,
-  CandlestickElement // Register CandlestickElement as well
+  CandlestickElement
 );
 
 const CryptoChart = ({ symbol, cryptoData }) => {
@@ -35,7 +24,7 @@ const CryptoChart = ({ symbol, cryptoData }) => {
   useEffect(() => {
     if (cryptoData) {
       const newCandle = {
-        x: new Date().getTime(), // Use 'x' for time
+        x: new Date().getTime(),
         o: parseFloat(cryptoData.prevOpen),
         h: parseFloat(cryptoData.high24hr),
         l: parseFloat(cryptoData.low24hr),
@@ -47,14 +36,12 @@ const CryptoChart = ({ symbol, cryptoData }) => {
 
   useEffect(() => {
     if (chartRef.current) {
-      // Destroy the previous chart if it exists
       if (chartInstanceRef.current) {
         chartInstanceRef.current.destroy();
       }
 
-      // Create a new chart instance
       const chartInstance = new ChartJS(chartRef.current, {
-        type: "candlestick", // Now 'candlestick' is registered and can be used
+        type: "candlestick",
         data: {
           datasets: [
             {
@@ -72,9 +59,9 @@ const CryptoChart = ({ symbol, cryptoData }) => {
           plugins: {
             title: {
               display: true,
-              text: `${symbol}`,
+              text: `${symbol} Price Chart`,
               font: {
-                size: 20,
+                size: 30,
               },
               padding: {
                 top: 10,
@@ -118,10 +105,8 @@ const CryptoChart = ({ symbol, cryptoData }) => {
         },
       });
 
-      // Store the chart instance for later destruction
       chartInstanceRef.current = chartInstance;
 
-      // Cleanup function to destroy the chart when the component is unmounted or data changes
       return () => {
         if (chartInstanceRef.current) {
           chartInstanceRef.current.destroy();
@@ -132,13 +117,16 @@ const CryptoChart = ({ symbol, cryptoData }) => {
 
   return (
     <div className="min-w-screen min-h-screen bg-gray-900 flex items-center justify-center px-5 py-5">
-      <div className="rounded shadow-xl overflow-hidden w-full md:flex max-w-4xl">
+      <div className="rounded shadow-xl overflow-hidden w-full md:flex max-w-5xl">
         {/* Chart Section */}
-        <div className="flex w-full md:w-1/2 px-5 pb-4 pt-8 bg-indigo-500 text-white items-center">
-          <canvas ref={chartRef} className="w-full" />
+        <div className="flex w-full md:w-2/3 px-5 pb-4 pt-8 bg-indigo-500 text-white items-center">
+          <canvas
+            ref={chartRef}
+            className="w-full h-[900px] max-w-[800px] mx-auto"
+          />
         </div>
         {/* Info Section */}
-        <div className="flex w-full md:w-1/2 p-10 bg-gray-100 text-gray-600 items-center">
+        <div className="flex w-full md:w-1/3 p-10 bg-gray-100 text-gray-600 items-center">
           <div className="w-full rounded-[32px] bg-[#292929] shadow-[inset_-22px_22px_44px_#242424,inset_22px_-22px_44px_#2e2e2e] p-6">
             <h3 className="text-lg font-semibold leading-tight text-gray-800">
               {symbol}
@@ -163,27 +151,29 @@ const CryptoChart = ({ symbol, cryptoData }) => {
             </div>
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div>
-                <div className="font-semibold">Open:</div>
+                <div className="font-semibold text-gray-200">Open:</div>
                 <div>{cryptoData?.prevOpen}</div>
               </div>
               <div>
-                <div className="font-semibold">Market Cap:</div>
+                <div className="font-semibold text-gray-200">Market Cap:</div>
                 <div>{cryptoData?.quoteVolume}</div>
               </div>
               <div>
-                <div className="font-semibold">High:</div>
+                <div className="font-semibold text-gray-200">High:</div>
                 <div>{cryptoData?.high24hr}</div>
               </div>
               <div>
-                <div className="font-semibold">P/E Ratio:</div>
+                <div className="font-semibold text-gray-200">P/E Ratio:</div>
                 <div>N/A</div>
               </div>
               <div>
-                <div className="font-semibold">Low:</div>
+                <div className="font-semibold text-gray-200">Low:</div>
                 <div>{cryptoData?.low24hr}</div>
               </div>
               <div>
-                <div className="font-semibold">Dividend Yield:</div>
+                <div className="font-semibold text-gray-200">
+                  Dividend Yield:
+                </div>
                 <div>N/A</div>
               </div>
             </div>
