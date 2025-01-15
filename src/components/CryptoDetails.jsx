@@ -1,12 +1,10 @@
-import React from "react";
-
 const CryptoDetails = ({ data }) => {
   if (!data) {
-    return <p className="text-gray-500">No data available for this cryptocurrency.</p>;
+    return <p className="">No data available for this cryptocurrency.</p>;
   }
 
   return (
-    <div className="bg-gray-50 p-4 rounded shadow mb-4 text-sm">
+    <div className="">
       <p>
         <strong>Last Price:</strong>{" "}
         {data.last !== undefined ? data.last : "N/A"}
