@@ -1,206 +1,130 @@
 import { useEffect, useState, useRef } from "react";
-import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, Tooltip, Legend, Title } from "chart.js";
-import { CandlestickController, CandlestickElement } from "chartjs-chart-financial";
-import "chartjs-chart-financial";
+import useCryptoData from "../hooks/useCryptoData";
+import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Tooltip, Legend, Title, LineController } from "chart.js";
 import "chartjs-adapter-date-fns";
 
-// ลงทะเบียนส่วนประกอบที่จำเป็นของ Chart.js
-ChartJS.register(
-  CategoryScale, LinearScale, TimeScale, Tooltip, Legend, Title, CandlestickController, CandlestickElement
-);
+// ลงทะเบียนโมดูล Chart.js
+ChartJS.register(CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Tooltip, Legend, Title, LineController);
 
-const CryptoChart = ({ symbol, cryptoData }) => {
-  // สร้างคอมโพเนนต์หลักสำหรับแสดงกราฟแท่งเทียนและข้อมูลคริปโตเคอเรนซี
+const CryptoChart = () => {
+  const { cryptoData, loading, error, setSymbolSearch } = useCryptoData();
+  const [selectedSymbol, setSelectedSymbol] = useState("BTC");
   const [chartData, setChartData] = useState([]);
-  // สร้าง state สำหรับเก็บข้อมูลของกราฟแท่งเทียน
   const chartRef = useRef(null);
-  // ใช้ useRef เพื่ออ้างอิงถึง <canvas> สำหรับวาดกราฟ
   const chartInstanceRef = useRef(null);
-  // ใช้ useRef เพื่อเก็บอินสแตนซ์ของกราฟ (Chart.js instance)
 
-  // อัปเดตข้อมูลกราฟเมื่อ cryptoData เปลี่ยนแปลง
+  // อัปเดตข้อมูลกราฟเมื่อ cryptoData เปลี่ยน
   useEffect(() => {
-    if (cryptoData) {
-      const newCandle = {
+    if (cryptoData && cryptoData[`THB_${selectedSymbol}`]) {
+      const newPoint = {
         x: new Date().getTime(),
-        // แกน X เป็นเวลาปัจจุบัน
-        o: parseFloat(cryptoData.prevOpen),
-        // ราคาเปิด
-        h: parseFloat(cryptoData.high24hr),
-        // ราคาสูงสุดใน 24 ชั่วโมง
-        l: parseFloat(cryptoData.low24hr),
-        // ราคาต่ำสุดใน 24 ชั่วโมง
-        c: parseFloat(cryptoData.last),
-        // ราคาปัจจุบัน
+        y: parseFloat(cryptoData[`THB_${selectedSymbol}`].last),
       };
-      setChartData((prevData) => [...prevData, newCandle]);
-      // เพิ่มข้อมูลแท่งเทียนใหม่เข้าไปใน state
+      setChartData((prevData) => [...prevData.slice(-50), newPoint]); // เก็บข้อมูลล่าสุดไม่เกิน 50 จุด
     }
-  }, [cryptoData]);
+  }, [cryptoData, selectedSymbol]);
 
-  // สร้างกราฟ Chart.js เมื่อข้อมูลกราฟหรือ symbol เปลี่ยน
+  // สร้างและอัปเดต Chart.js
   useEffect(() => {
     if (chartRef.current) {
       if (chartInstanceRef.current) {
+        // ทำลายกราฟเก่า
         chartInstanceRef.current.destroy();
-        // ลบกราฟเก่าก่อนสร้างกราฟใหม่
       }
 
+      // สร้างกราฟใหม่
       const chartInstance = new ChartJS(chartRef.current, {
-        type: "candlestick",
-        // กำหนดชนิดของกราฟเป็นแท่งเทียน
+        type: "line",
         data: {
           datasets: [
             {
-              label: `${symbol} Price`,
-              // ชื่อกราฟ (ชื่อคริปโต)
+              label: `${selectedSymbol} Price (THB)`,
               data: chartData,
-              // ข้อมูลแท่งเทียน
               borderColor: "#0d6efd",
-              // สีขอบของกราฟ
               borderWidth: 2,
-              backgroundColor: "#240750",
-              // สีพื้นหลังของกราฟ
+              backgroundColor: "rgba(13, 110, 253, 0.2)",
+              pointRadius: 0,
+              tension: 0.3,
             },
           ],
         },
         options: {
           responsive: true,
-          // ให้กราฟตอบสนองกับการปรับขนาดจอ
           maintainAspectRatio: false,
-          // ปิดการรักษาอัตราส่วนของกราฟ
           plugins: {
-            title: {
-              display: true,
-              // แสดงชื่อกราฟ
-              text: `${symbol} Price Chart`,
-              // ข้อความของชื่อกราฟ
-              font: {
-                size: 30,
-              },
-              padding: {
-                top: 10,
-                bottom: 10,
-              },
-            },
-            legend: {
-              display: false,
-              // ปิดการแสดง legend
-            },
+            title: { display: true, text: `${selectedSymbol} Price Chart`, font: { size: 30 } },
+            legend: { display: false },
           },
           scales: {
-            x: {
-              type: "time",
-              // แกน X แสดงเป็นเวลา
-              time: {
-                unit: "minute",
-                // หน่วยของเวลาเป็นนาที
-              },
-              title: {
-                display: true,
-                text: "Time",
-                font: {
-                  size: 12,
-                },
-              },
-              grid: {
-                drawOnChartArea: false,
-                // ไม่แสดงเส้นตารางในแกน X
-              },
-            },
-            y: {
-              title: {
-                display: true,
-                text: "Price",
-                font: {
-                  size: 12,
-                },
-              },
-              grid: {
-                color: "#e5e5e5",
-                // สีของเส้นตารางในแกน Y
-              },
-            },
+            x: { type: "time", time: { unit: "minute" }, title: { display: true, text: "Time", font: { size: 30 } }, grid: { drawOnChartArea: false } },
+            y: { title: { display: true, text: "Price (THB)", font: { size: 14 } }, grid: { color: "#e5e5e5" } },
           },
         },
       });
 
       chartInstanceRef.current = chartInstance;
-      // เก็บอินสแตนซ์ของกราฟเพื่อใช้งานภายหลัง
 
+      // ล้างกราฟเมื่อ component ถูกทำลาย
       return () => {
         if (chartInstanceRef.current) {
           chartInstanceRef.current.destroy();
-          // ทำลายกราฟเมื่อคอมโพเนนต์ถูก unmount
         }
       };
     }
-  }, [chartData, symbol]);
+  }, [chartData, selectedSymbol]);
+
+  const handleSymbolChange = (event) => {
+    const newSymbol = event.target.value.toUpperCase();
+    setSelectedSymbol(newSymbol);
+    setSymbolSearch([newSymbol]); // อัปเดต symbolSearch ใน hook
+  };
 
   return (
-    <div className="min-w-screen min-h-screen bg-gray-900 flex flex-col items-center justify-center px-9 py-5">
-      {/* ส่วนของกราฟ */}
-      <div className="w-full px-5 pb-4 pt-8 bg-indigo-500 text-white items-center justify-center">
-        <canvas ref={chartRef} className="w-full h-[600px] max-w-[1000px] mx-auto" />
+    <div className="min-w-screen min-h-screen bg-gray-900 flex flex-col items-center px-6 py-6">
+      {loading && <p>Loading...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+
+      {/* กราฟ */}
+      <div className="w-full max-w-[1000px] p-5 bg-white rounded-lg shadow-lg">
+        <canvas ref={chartRef} className="w-full h-[1300px]" />
       </div>
 
-      {/* ส่วนของข้อมูล */}
-      <div className="flex w-full p-5 bg-gray-100 text-gray-400 items-center justify-center mt-5">
-        <div className="w-full rounded-[32px] bg-[#292929] shadow-[inset_-22px_22px_44px_#242424,inset_22px_-22px_44px_#2e2e2e] p-6">
-          <h3 className="text-lg font-semibold leading-tight text-gray-500">
-            {symbol}
-            {/* ชื่อของคริปโต */}
-          </h3>
-          <h6 className="text-lg leading-tight mb-2 text-gray-400">
-            {cryptoData?.last} - {new Date().toLocaleString()}
-            {/* ราคาปัจจุบันและเวลาปัจจุบัน */}
-          </h6>
-          <div className="flex w-full items-end mb-6 text-gray-300">
-            <span className="grid grid-cols-2 gap-4 text-lg text-gray-400">
-              {cryptoData?.last}
-              {/* ราคาล่าสุด */}
-            </span>
-            <span
-              className={`block leading-5 text-sl ml-4 ${
-                cryptoData?.percentChange > 0
-                  ? "text-green-500"
-                  : "text-red-500"
-              }`}
-            >
-              {cryptoData?.percentChange > 0 ? "▲" : "▼"}
-              {/* แสดงสัญลักษณ์ ▲ หรือ ▼ ขึ้นกับการเปลี่ยนแปลงของราคา */}
-              {cryptoData?.percentChange}%
-            </span>
+      {/* ตัวเลือกเหรียญ */}
+      <div className="mt-6">
+        <select
+          value={selectedSymbol}
+          onChange={handleSymbolChange}
+          className="p-2 border border-gray-300 rounded-lg"
+        >
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+          <option value="ADA">ADA</option>
+          <option value="SOL">SOL</option>
+          <option value="XRP">XRP</option>
+        </select>
+      </div>
+
+      {/* ข้อมูลเพิ่มเติม */}
+      {cryptoData && cryptoData[`THB_${selectedSymbol}`] && (
+        <div className="flex flex-wrap justify-between items-center w-full max-w-[1000px] bg-gray-100 text-gray-700 mt-6 p-6 rounded-lg shadow-lg">
+          <div className="text-center w-1/2 sm:w-1/4">
+            <h3 className="text-sm font-medium text-gray-500">Last Price</h3>
+            <p className="text-lg font-semibold">{cryptoData[`THB_${selectedSymbol}`].last || "N/A"}</p>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-lg">
-            {/* ข้อมูลเพิ่มเติม เช่น ราคาเปิด ราคาสูงสุด/ต่ำสุด ฯลฯ */}
-            <div>
-              <div className="font-semibold text-gray-200">Open:</div>
-              <div>{cryptoData?.prevOpen}</div>
-            </div>
-            <div>
-              <div className="font-semibold text-gray-200">Market Cap:</div>
-              <div>{cryptoData?.quoteVolume}</div>
-            </div>
-            <div>
-              <div className="font-semibold text-gray-200">High:</div>
-              <div>{cryptoData?.high24hr}</div>
-            </div>
-            <div>
-              <div className="font-semibold text-gray-200">P/E Ratio:</div>
-              <div>N/A</div>
-            </div>
-            <div>
-              <div className="font-semibold text-gray-200">Low:</div>
-              <div>{cryptoData?.low24hr}</div>
-            </div>
-            <div>
-              <div className="font-semibold text-gray-200">Dividend Yield:</div>
-              <div>N/A</div>
-            </div>
+          <div className="text-center w-1/2 sm:w-1/4">
+            <h3 className="text-sm font-medium text-gray-500">24H High</h3>
+            <p className="text-lg font-semibold">{cryptoData[`THB_${selectedSymbol}`].high24hr || "N/A"}</p>
+          </div>
+          <div className="text-center w-1/2 sm:w-1/4">
+            <h3 className="text-sm font-medium text-gray-500">24H Low</h3>
+            <p className="text-lg font-semibold">{cryptoData[`THB_${selectedSymbol}`].low24hr || "N/A"}</p>
+          </div>
+          <div className="text-center w-1/2 sm:w-1/4">
+            <h3 className="text-sm font-medium text-gray-500">Change (%)</h3>
+            <p className="text-lg font-semibold">{cryptoData[`THB_${selectedSymbol}`].percentChange || "N/A"}</p>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
