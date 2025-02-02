@@ -11,7 +11,7 @@ const useCryptoData = () => {
     setLoading(true);
     try {
       const response = await axios.get("https://api.bitkub.com/api/market/ticker");
-      console.log(response.data); // แสดงข้อมูล API ทั้งหมด
+      //  console.log("Facth data API" + response.data); // แสดงข้อมูล API ทั้งหมด
 
       // ค้นหาข้อมูลของแต่ละเหรียญใน symbols
       const data = symbols.reduce((acc, symbol) => {
@@ -42,3 +42,5 @@ const useCryptoData = () => {
 };
 
 export default useCryptoData;
+
+
